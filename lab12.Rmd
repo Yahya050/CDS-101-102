@@ -1,0 +1,66 @@
+---
+title: "Lab 12"
+author: "Muhamad Yahya Bin Haroon"
+date: "`r Sys.Date()`"
+output:
+  flexdashboard::flex_dashboard
+---
+
+```{r setup, include = FALSE}
+library(dplyr)
+library(tidyverse)
+library(plotly)
+library(crosstalk)
+
+pokemon <- read_csv("pokemon.csv")
+
+shared_pokemon <- SharedData$new(pokemon)
+```
+
+Column
+-----------------------------------------------
+
+### Total Distribution of Stats of Pokemon
+
+```{r}
+pokemon_ordered <- pokemon %>%
+  group_by(`Type 1`) %>%
+  mutate(median_Total = median(Total)) %>%
+  arrange(desc(median_Total)) %>%
+  ungroup()
+```
+```{r}
+shared_pokemon <- SharedData$new(pokemon_ordered)
+
+p <- ggplot(data = shared_pokemon, aes(x = reorder(`Type 1`, -median_Total), y = Total, fill = `Type 1`)) +
+  geom_boxplot() +
+  labs(x = "Type 1", y = "Total Stats Distribution") +
+  theme(axis.text.x = element_text(angle = 45))
+
+dynamic_plot <- ggplotly(p)
+
+dynamic_plot
+```
+
+Column
+-----------------------------------------------
+
+### Pokémon Attack vs. Defense Comparison
+
+```{r}
+p <- shared_pokemon %>%
+  ggplot(aes(x = Defense, y = Attack, color = `Type 1`)) +
+  geom_point() +
+  labs(title = "Attack vs Defense by Type 1",
+       x = "Defense", y = "Attack")
+dynamic_plot <- ggplotly(p)
+
+dynamic_plot
+```
+
+SidebarName {.sidebar}
+------------------------------------------
+
+```{r}
+filter_select("poke_type", "Pokemon Type", shared_pokemon, ~`Type 1`)
+```
